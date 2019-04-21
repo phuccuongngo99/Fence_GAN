@@ -27,4 +27,4 @@ This is the official implementation of the paper: Fence GAN: Towards Better Anom
     ```
     python3 --dataset mnist --ano_class 0 --epochs 100
     ```
-Check results and plots under ```result``` folder
+Check results and plots under `result` folder
