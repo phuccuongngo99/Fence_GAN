@@ -24,8 +24,6 @@ This is the official implementation of the paper: Fence GAN: Towards Better Anom
 ### 2D Synthetic Dataset
 
 ### MNIST
-    ```
     python3 main.py --dataset mnist --ano_class 0 --epochs 100
-    ```
 
 Check results and plots under ```result``` folder
