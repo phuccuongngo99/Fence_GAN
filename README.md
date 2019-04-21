@@ -22,9 +22,9 @@ This is the official implementation of the paper: Fence GAN: Towards Better Anom
 ## Anomaly Detection
 
 ### 2D Synthetic Dataset
-    ```
+    
     python3 2D_experiment/2D_fgan.py
-    ```
+    
 ### MNIST
     python3 --dataset mnist --ano_class 0 --epochs 100
     
