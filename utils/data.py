@@ -1,10 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Created on Sat Apr 20 16:40:28 2019
-
-@author: deeplearning
-"""
 import numpy as np
 from keras.datasets import mnist
 

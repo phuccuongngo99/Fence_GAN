@@ -1,10 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Created on Sun Apr 21 09:46:31 2019
-
-@author: deeplearning
-"""
 import os
 import numpy as np
 import matplotlib.pyplot as plt

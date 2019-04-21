@@ -1,10 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Created on Sun Apr 21 09:32:54 2019
-
-@author: deeplearning
-"""
 import os
 import json
 import random
@@ -26,7 +19,6 @@ def set_trainability(model, trainable=False): #alternate to freeze D network whi
 
 def noise_data(n):
     return np.random.normal(0,1,[n,200])
-
 
 def D_data(n_samples,G,mode,x_train):
     if mode == 'real':
@@ -58,7 +50,7 @@ def pretrain(args, G ,D, GAN, x_train, x_test, y_test, x_val, y_val, ano_data):
                 loss += D.train_on_batch(x, y)
                 
                 set_trainability(D, True)
-                K.set_value(gw, [args.gen_weight])
+                K.set_value(gw, [args.gamma])
                 x,y = D_data(batch_size,G,'gen',x_train)
                 loss += D.train_on_batch(x,y)
                 
@@ -102,7 +94,7 @@ def train(args, G ,D, GAN, x_train, x_test, y_test, x_val, y_val, ano_data):
                     loss_temp.append(D.train_on_batch(x, y))
                     
                     set_trainability(D, True)
-                    K.set_value(gw, [args.gen_weight])
+                    K.set_value(gw, [args.gamma])
                     x,y = D_data(batch_size,G,'gen',x_train)
                     loss_temp.append(D.train_on_batch(x,y))
                     
@@ -112,7 +104,7 @@ def train(args, G ,D, GAN, x_train, x_test, y_test, x_val, y_val, ano_data):
                     set_trainability(D, False)
                     x = noise_data(batch_size)
                     y = np.zeros(batch_size)
-                    y[:] = args.gen_target
+                    y[:] = args.alpha
                     g_loss.append(GAN.train_on_batch(x,y))
                     
                     t.set_postfix(G_loss=g_loss[-1], D_loss=d_loss[-1])

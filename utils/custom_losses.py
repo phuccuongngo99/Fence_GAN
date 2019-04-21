@@ -1,10 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Created on Sun Aug  5 10:38:45 2018
-
-@author: root
-"""
 import tensorflow as tf
 from keras import losses
 ### Average distance from the Center of Mass
