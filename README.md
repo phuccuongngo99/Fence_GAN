@@ -1,6 +1,12 @@
-# Fence_GAN
-To run Mnist Code:
+__Fence GAN: Toward Better Anomaly Detection__
+This is the official implementation of the paper: Fence GAN: Towards Better Anomaly Detection [link] (https://arxiv.org/abs/1904.01209)
 
-'''python3 main.py --dataset mnist --ano_class 0 --epochs 100'''
+__Prerequisites__
 
-Check results and plots under "Result" folder
+__Installation__
+
+__Anomaly Detection__
+__MNIST__
+```python3 main.py --dataset mnist --ano_class 0 --epochs 100```
+
+Check results and plots under ```result``` folder
