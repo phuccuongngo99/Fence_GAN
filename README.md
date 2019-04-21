@@ -12,7 +12,7 @@ This is the official implementation of the paper: Fence GAN: Towards Better Anom
     ```
     git clone https://github.com/phuccuongngo99/Fence_GAN.git
     ```
-2. Installing tensorflow or tensorflow-gpu by following instruction at (https://www.tensorflow.org/install/pip)
+2. Installing tensorflow or tensorflow-gpu by following instruction [here](https://www.tensorflow.org/install/pip).
 
 3. Installing necessary libraries
     ```
