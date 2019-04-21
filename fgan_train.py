@@ -50,7 +50,7 @@ def D_data(n_samples,G,mode,x_train, dataset = 'mnist'):
         
         return x_gen, y0
     
-def pretrain(args, G ,D, GAN, x_train, x_test, y_test, x_val, y_val, ano_data):
+def pretrain(args, G ,D, GAN, x_train, x_test, y_test, x_val, y_val, ano_data, dataset = 'mnist'):
     ###Pretrain discriminator
     ###Generator is not trained
     print("===== Start of Pretraining =====")
@@ -62,12 +62,12 @@ def pretrain(args, G ,D, GAN, x_train, x_test, y_test, x_val, y_val, ano_data):
                 loss = 0
                 set_trainability(D, True)
                 K.set_value(gw, [1])
-                x,y = D_data(batch_size,G,'real',x_train)
+                x,y = D_data(batch_size,G,'real',x_train, dataset = dataset)
                 loss += D.train_on_batch(x, y)
                 
                 set_trainability(D, True)
                 K.set_value(gw, [args.gamma])
-                x,y = D_data(batch_size,G,'gen',x_train)
+                x,y = D_data(batch_size,G,'gen',x_train, dataset = dataset)
                 loss += D.train_on_batch(x,y)
                 
                 t.set_postfix(D_loss=loss/2)
@@ -191,19 +191,19 @@ def train(args, G ,D, GAN, x_train, x_test, y_test, x_val, y_val, ano_data):
                         
                         set_trainability(D, True)
                         K.set_value(gw, [1])
-                        x,y = D_data(batch_size,G,'real',x_train)
+                        x,y = D_data(batch_size,G,'real',x_train, dataset = dataset)
                         loss_temp.append(D.train_on_batch(x, y))
                         
                         set_trainability(D, True)
                         K.set_value(gw, [args.gamma])
-                        x,y = D_data(batch_size,G,'gen',x_train)
+                        x,y = D_data(batch_size,G,'gen',x_train, dataset = dataset)
                         loss_temp.append(D.train_on_batch(x,y))
                         
                         d_loss.append(sum(loss_temp)/len(loss_temp))
                         
                         ###Train Generator
                         set_trainability(D, False)
-                        x = noise_data(batch_size)
+                        x = noise_data(batch_size, dataset = 'cifar10')
                         y = np.zeros(batch_size)
                         y[:] = args.alpha
                         g_loss.append(GAN.train_on_batch(x,y))
@@ -245,7 +245,11 @@ def train(args, G ,D, GAN, x_train, x_test, y_test, x_val, y_val, ano_data):
 def training_pipeline(args):
     seed(args.seed)
     set_random_seed(args.seed)
-    x_train, x_test, y_test, x_val, y_val, ano_data = load_data(args)
+    if args.dataset == 'mnist':
+        x_train, x_test, y_test, x_val, y_val, ano_data = load_data(args)
+    elif args.dataset == 'cifar10':
+        x_train, x_test, y_test, x_val, y_val = load_data(args)
+        ano_data = 0
     G, D, GAN = load_model(args)
-    pretrain(args, G, D, GAN, x_train, x_test, y_test, x_val, y_val, ano_data)
+    pretrain(args, G, D, GAN, x_train, x_test, y_test, x_val, y_val, ano_data, dataset = args.dataset)
     train(args, G, D, GAN, x_train, x_test, y_test, x_val, y_val, ano_data)

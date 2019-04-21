@@ -74,7 +74,7 @@ def get_cifar10_model(args):
     x = Dropout(0.2)(x)
     D_out = Dense(1, kernel_initializer = 'glorot_normal', activation = 'sigmoid')(x)
     D = Model(D_in, D_out)
-    dopt = Adam(lr = args.lr_D, beta_1 = 0.5, beta_2 = 0.999, decay = 1e-5)
+    dopt = Adam(lr = args.d_lr, beta_1 = 0.5, beta_2 = 0.999, decay = 1e-5)
     D.compile(loss = D_loss, optimizer = dopt)
     
     '''
@@ -87,6 +87,8 @@ def get_cifar10_model(args):
     GAN = Model(GAN_in, GAN_out)
     gopt = Adam(lr = args.g_lr, beta_1=0.5, beta_2=0.999)
     GAN.compile(loss = com_conv(G_out,args.beta,2), optimizer=gopt)
+    
+    return G, D, GAN
 
 def get_mnist_model(args):
     '''
