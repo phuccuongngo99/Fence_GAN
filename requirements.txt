@@ -1,0 +1,7 @@
+keras
+numpy
+json
+matplotlib
+tqdm
+sklearn
+argparse
