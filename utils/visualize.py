@@ -39,16 +39,16 @@ def show_images(img_array,epoch,result_path):
     plt.close()
     
 
-def D_test(D, G, GAN, epoch, v_freq, x_val, y_val, x_test, y_test, ano_data, ano_digit,result_path):
+def D_test(D, G, GAN, epoch, v_freq, x_val, y_val, x_test, y_test, ano_data, ano_class,result_path):
+    ###Plotting AUPRC curve
+    ###Histogram of predicted scores of nornmal data, anomalous data and generated data
+    
     ###VALIDATION
     y_true = y_val
     y_pred = np.squeeze(D.predict(x_val))
 
     precision, recall, thresholds = precision_recall_curve(y_true, y_pred)
     val_prc = auc(recall, precision)
-    
-    fpr, tpr, _ = roc_curve(y_true, y_pred)
-    val_roc = auc(fpr, tpr)
     
     #Drawing graph
     plt.figure()
@@ -58,32 +58,18 @@ def D_test(D, G, GAN, epoch, v_freq, x_val, y_val, x_test, y_test, ano_data, ano
     plt.ylabel('Precision')
     plt.ylim([0.0, 1.05])
     plt.xlim([0.0, 1.0])
-    plt.title('Ano_digit:{} Epoch: {}; AUPRC: {}'.format(ano_digit, epoch+1, val_prc))
+    plt.title('Validation Ano_class:{} Epoch: {}; AUPRC: {}'.format(ano_class, epoch+1, val_prc))
     
     plt.savefig('{}/pictures/auprc_{}.png'.format(result_path,int((epoch+1)/v_freq)))
     plt.close()
     
-    plt.figure()
-    plt.step(fpr, tpr, color='b', alpha=0.2, where='post')
-    plt.fill_between(fpr, tpr, step='post', alpha=0.2, color='b')
-    plt.xlabel('FPR')
-    plt.ylabel('TPR')
-    plt.ylim([0.0, 1.05])
-    plt.xlim([0.0, 1.0])
-    plt.title('Ano_digit:{} Epoch: {}; AUROC: {}'.format(ano_digit, epoch+1, val_roc))
-    plt.savefig('{}/pictures/auroc_{}.png'.format(result_path,int((epoch+1)/v_freq)))
-    plt.close()
-    
-    ###Testing
+    ###TEST
     y_true = y_test
     y_pred = np.squeeze(D.predict(x_test))
 
     precision, recall, thresholds = precision_recall_curve(y_true, y_pred)
     test_prc = auc(recall, precision)
     
-    fpr, tpr, _ = roc_curve(y_true, y_pred)
-    test_roc = auc(fpr, tpr)
-
     ###Generated images
     y_gen_pred = np.squeeze(GAN.predict(noise_data(5000)))
     
@@ -95,9 +81,9 @@ def D_test(D, G, GAN, epoch, v_freq, x_val, y_val, x_test, y_test, ano_data, ano
     #plt.axis([0, 1, 0, 1]) 
     plt.xlabel('Confidence')
     plt.ylabel('Probability')
-    plt.title('PRC:{:.3f} ROC:{:.3f}'.format(test_prc, test_roc), fontsize=20)
+    plt.title('Test PRC:{:.3f}'.format(test_prc), fontsize=20)
     plt.legend(loc=9)
     plt.savefig('{}/histogram/his_{}.png'.format(result_path,int((epoch+1)/v_freq)),dpi=60)
     plt.close()
     
-    return val_prc, val_roc, test_prc, test_roc
+    return val_prc, test_prc

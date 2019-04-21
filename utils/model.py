@@ -25,12 +25,10 @@ def set_trainability(model, trainable=False): #alternate to freeze D network whi
     for layer in model.layers:
         layer.trainable = trainable        
 
-
 def D_loss(y_true, y_pred):
     loss_gen = losses.binary_crossentropy(y_true,y_pred)
     loss = gw*loss_gen
     return loss
-
 
 def get_mnist_model(args):
 ###Return: G, D_r, D_g, GAN
@@ -73,9 +71,7 @@ def get_mnist_model(args):
     G_out = G(GAN_in)
     GAN_out = D(G_out)
     GAN = Model(GAN_in, GAN_out)
-    
     gopt = Adam(lr=args.g_lr, beta_1=0.5, beta_2=0.999)
-    
     GAN.compile(loss=com_conv(G_out,args.dispersion_weight,2), optimizer=gopt)
     
     return G, D, GAN
