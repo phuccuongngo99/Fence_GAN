@@ -19,6 +19,7 @@ args = parser.add_argument('--pretrain',type=int, default=0, help='number of pre
 args = parser.add_argument('--d_lr', default=1e-5, help='learning_rate of discriminator')
 args = parser.add_argument('--g_lr', default=2e-5, help='learning rate of generator')
 args = parser.add_argument('--v_freq', type=int, default=1, help='epoch frequency to evaluate performance')
+args = parser.add_argument('--seed', type=int, default=0, help='numpy and tensorflow seed')
 
 args = parser.parse_args()
 

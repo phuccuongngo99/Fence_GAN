@@ -2,6 +2,8 @@ import os
 import json
 import random
 import numpy as np
+from numpy.random import seed
+from tensorflow import set_random_seed
 from tqdm import trange
 import keras.backend as K
 from collections import OrderedDict
@@ -147,6 +149,8 @@ def train(args, G ,D, GAN, x_train, x_test, y_test, x_val, y_val, ano_data):
 
 
 def training_pipeline(args):
+    seed(args.seed)
+    set_random_seed(args.seed)
     x_train, x_test, y_test, x_val, y_val, ano_data = load_data(args)
     G, D, GAN = load_model(args)
     pretrain(args, G, D, GAN, x_train, x_test, y_test, x_val, y_val, ano_data)
