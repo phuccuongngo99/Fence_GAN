@@ -26,11 +26,9 @@ This is the official implementation of the paper: Fence GAN: Towards Better Anom
     python3 2D_experiment/2D_fgan.py
     
 ### MNIST
-    python3 --dataset mnist --ano_class 0 --epochs 100
-    
+    python3 --dataset mnist --ano_class 0 --epochs 100 --beta 30 --gamma 0.1 --alpha 0.1 --batch_size 200 --pretrain 0 --d_lr 1e-5 --g_lr 2e-5 --v_freq 1
 Check results and plots under `result` folder
 
 
 ### CIFAR10
-    python3 --dataset cifar10 --ano_class 0 --epochs 150 --beta 10 --alpha 0.5 --gamma 0.5 --d_lr 1e-4 --g_lr 1e-3 --v-freq 1 --pretrain 15
-    
+    python3 --dataset cifar10 --ano_class 0 --epochs 150 --beta 10 --gamma 0.5 --alpha 0.5  --batch_size 128 --pretrain 15 --d_lr 1e-4 --g_lr 1e-3 --v-freq 1    
