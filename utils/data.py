@@ -13,7 +13,7 @@ def preprocess(x, dataset = 'mnist'):
 
 
 def load_data(args):
-    ###Dataset: 2d, mnist, cifar10, kdd99, custom
+    ###Dataset: mnist, cifar10, kdd99, custom
     ###Ano_class: 1 actual class label of the dataset
     if args.dataset == 'mnist':
         return get_mnist(args.ano_class)
@@ -21,6 +21,13 @@ def load_data(args):
         return get_cifar10(args.ano_class)
 
 def get_mnist(ano_class):
+    
+    '''
+    There are 2 classes: normal and anomalous
+    - Training data: x_train: 80% of data/images from normal classes
+    - Validation data: x_val: 5% of data/images from normal classes + 25% of data/images from anomalous classes
+    - Testing data: x_test: 15% of data/images from normal classes + 75% of data/images from anomalous classes
+    '''
     (x_tr, y_tr), (x_tst, y_tst) = mnist.load_data()
     
     x_total = np.concatenate([x_tr, x_tst])
@@ -29,13 +36,7 @@ def get_mnist(ano_class):
     
     x_total = x_total.reshape(-1, 28, 28, 1)
     x_total = preprocess(x_total)
-    
-    ###
-    #There are 2 classes: normal and anomalous
-    #Training data: x_train: 80% of data/images from normal classes
-    #Validation data: x_val: 5% of data/images from normal classes + 25% of data/images from anomalous classes
-    #Testing data: x_test: 15% of data/images from normal classes + 75% of data/images from anomalous classes
-    ###
+
     delete = []
     for count, i in enumerate(y_total):
         if i == ano_class:

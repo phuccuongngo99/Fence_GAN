@@ -2,11 +2,8 @@ import os
 import numpy as np
 import math
 import matplotlib.pyplot as plt
-from sklearn.metrics import auc, precision_recall_curve, roc_curve, average_precision_score
+from sklearn.metrics import auc, precision_recall_curve, roc_curve
 from PIL import Image
-
-def noise_data(n):
-    return np.random.normal(0,1,[n,200])
 
 def deprocess(x, dataset = 'mnist'):
     if dataset == 'mnist':
@@ -19,23 +16,19 @@ def deprocess(x, dataset = 'mnist'):
         x = x * 127.5 + 127.5
         return x
 
-def show_images(img_array,epoch,result_path, dataset = 'mnist'):
+def show_images(img_array,result_path, dataset = 'mnist'):
     if dataset == 'mnist':
         n_images = deprocess(img_array[:16])
-        rows = 4
-        cols = 4
         
-        plt.figure(figsize=(cols, rows))
+        plt.figure(figsize=(4,4))
         for i in range(len(n_images)):
             img = n_images[i,...]
-            plt.subplot(rows, cols, i+1)
+            plt.subplot(4, 4, i+1)
             plt.imshow(img, cmap='gray')
             plt.xticks([])
             plt.yticks([])
         plt.tight_layout()
-        if not os.path.exists('{}/pictures'.format(result_path)):
-            os.makedirs('{}/pictures'.format(result_path))
-        plt.savefig('{}/pictures/generated_{}.png'.format(result_path,epoch))
+        plt.savefig('{}/generated_data_at_best_epoch.png'.format(result_path))
         plt.close()
     
     elif dataset == 'cifar10': 
@@ -53,33 +46,43 @@ def show_images(img_array,epoch,result_path, dataset = 'mnist'):
         if not os.path.exists('{}/pictures'.format(result_path)):
             os.makedirs('{}/pictures'.format(result_path))
         img = Image.fromarray(combined_image.astype(np.uint8), 'RGB')
-        img.save('{}/pictures/generated_{}.png'.format(result_path,epoch))
+        img.save('{}/pictures/generated.png'.format(result_path))
         img.show()
     
 
-def D_test(D, G, GAN, epoch, v_freq, x_val, y_val, x_test, y_test, ano_class,result_path):
-    ###Plotting AUPRC curve
-    ###Histogram of predicted scores of nornmal data, anomalous data and generated data
+def compute_au(D, G, GAN, x_val, y_val, x_test, y_test, mode):
+    '''
+    Return auprc or auroc evaluated on validation/test set
+    '''
+    if mode == 'auprc':
+        ###VALIDATION
+        y_pred_val = np.squeeze(D.predict(x_val))
+        precision, recall, _ = precision_recall_curve(y_val, y_pred_val)
+        val_prc = auc(recall, precision)
+        
+        ###TEST
+        y_pred_test = np.squeeze(D.predict(x_test))
+        precision, recall, _ = precision_recall_curve(y_test, y_pred_test)
+        test_prc = auc(recall, precision)
     
-    ###VALIDATION
-    y_true = y_val
-    y_pred = np.squeeze(D.predict(x_val))
-
-    precision, recall, thresholds = precision_recall_curve(y_true, y_pred)
-    val_prc = auc(recall, precision)
+        return val_prc, test_prc
     
-    ###TEST
-    y_true = y_test
-    y_pred = np.squeeze(D.predict(x_test))
+    elif mode == 'auroc':
+        ###VALIDATION
+        y_pred_val = np.squeeze(D.predict(x_val))
+        fpr, tpr, _ = roc_curve(y_val, y_pred_val)
+        val_roc = auc(fpr, tpr)
+        
+        ###TEST
+        y_pred_val = np.squeeze(D.predict(x_val))
+        fpr, tpr, _ = roc_curve(y_val, y_pred_val)
+        val_roc = auc(fpr, tpr)
+        
+        return val_roc, val_prc
+        
 
-    precision, recall, thresholds = precision_recall_curve(y_true, y_pred)
-    test_prc = auc(recall, precision)
-    
-    return val_prc, test_prc
-
-
-def histogram(G, D, GAN, x_test, y_test, result_path):
-    y_gen_pred = np.squeeze(GAN.predict(noise_data(5000)))
+def histogram(G, D, GAN, x_test, y_test, result_path, latent_dim):
+    y_gen_pred = np.squeeze(GAN.predict(np.random.normal(0,1,[5000,latent_dim])))
     y_pred = np.squeeze(D.predict(x_test))
     
     plt.figure()
@@ -94,5 +97,5 @@ def histogram(G, D, GAN, x_test, y_test, result_path):
     plt.ylabel('Probability')
     plt.title('AUPRC on test set', fontsize=20)
     plt.legend(loc=9)
-    plt.savefig('{}/histogram/histogram_at_best_epoch.png'.format(result_path),dpi=60)
+    plt.savefig('{}/histogram_at_best_epoch.png'.format(result_path),dpi=60)
     plt.close()

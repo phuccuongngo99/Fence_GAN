@@ -11,6 +11,7 @@ from keras.regularizers import l2
 from keras.optimizers import Adam
 
 init_kernel = tf.random_normal_initializer(mean=0.0, stddev=0.02)
+
 gamma = K.variable([1])
 
 def load_model(args):
@@ -31,7 +32,7 @@ def D_loss(y_true, y_pred):
 
 def get_cifar10_model(args):
     '''
-    Return: G, D_r, D_g, GAN models
+    Return: G, D, GAN models
     '''
     
     '''
@@ -92,7 +93,7 @@ def get_cifar10_model(args):
 
 def get_mnist_model(args):
     '''
-    Return: G, D_r, D_g, GAN
+    Return: G, D, GAN
     '''
     
     '''
