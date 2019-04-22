@@ -47,7 +47,7 @@ usage: Train your Fence GAN [-h] [--dataset DATASET] [--ano_class ANO_CLASS]
 
 optional arguments:
   -h, --help            show this help message and exit
-  --dataset DATASET     2d | kdd99 | mnist | cifar10
+  --dataset DATASET     mnist | cifar10
   --ano_class ANO_CLASS
                         1 anomaly class
   --epochs EPOCHS       number of epochs to train
