@@ -26,7 +26,7 @@ This is the official implementation of the paper: Fence GAN: Towards Better Anom
     python3 2D_experiment/2D_fgan.py
     
 ### MNIST
-    python3 main.py --dataset mnist --ano_class 0 --epochs 100 --alpha 0.1 --beta 30 --gamma 0.1 --batch_size 200 --pretrain 0 --d_lr 1e-5 --g_lr 2e-5 --v_freq 1 --latent_dim 200 --evaluation 'auprc'
+    python3 main.py --dataset mnist --ano_class 0 --epochs 100 --alpha 0.1 --beta 30 --gamma 0.1 --batch_size 200 --pretrain 0 --d_lr 1e-5 --g_lr 2e-5 --v_freq 4 --latent_dim 200 --evaluation 'auprc'
 Check results and plots under `result` folder
 
 
