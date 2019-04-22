@@ -33,7 +33,7 @@ def show_images(img_array,result_path, dataset = 'mnist'):
     
     elif dataset == 'cifar10': 
         total,width,height, channel = img_array.shape[:]
-        img_array = deprocess(img_array)
+        img_array = deprocess(img_array, dataset='cifar10')
         cols = int(math.sqrt(total))
         rows = math.ceil(float(total)/cols)
         combined_image = np.zeros((int(height*rows), int(width*cols), int(channel)),
@@ -74,11 +74,11 @@ def compute_au(D, G, GAN, x_val, y_val, x_test, y_test, mode):
         val_roc = auc(fpr, tpr)
         
         ###TEST
-        y_pred_val = np.squeeze(D.predict(x_val))
-        fpr, tpr, _ = roc_curve(y_val, y_pred_val)
-        val_roc = auc(fpr, tpr)
+        y_pred_test = np.squeeze(D.predict(x_test))
+        fpr, tpr, _ = roc_curve(y_test, y_pred_test)
+        test_roc = auc(fpr, tpr)
         
-        return val_roc, val_prc
+        return val_roc, test_roc
         
 
 def histogram(G, D, GAN, x_test, y_test, result_path, latent_dim):

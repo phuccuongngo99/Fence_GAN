@@ -132,7 +132,7 @@ def train(args, G ,D, GAN, x_train, x_test, y_test, x_val, y_val):
                 f.close()
                 
                 if val_prc > best_val_prc:
-                    best_prc = val_prc
+                    best_val_prc = val_prc
                     best_test_prc = test_prc
                     histogram(G, D, GAN, x_test, y_test, result_path, latent_dim)
                     show_images(G.predict(noise_data(16, latent_dim)),result_path)
@@ -180,7 +180,7 @@ def train(args, G ,D, GAN, x_train, x_test, y_test, x_val, y_val):
                         
                         ###Train Generator
                         set_trainability(D, False)
-                        x = noise_data(batch_size, dataset = 'cifar10')
+                        x = noise_data(batch_size, latent_dim)
                         y = np.zeros(batch_size)
                         y[:] = args.alpha
                         g_loss.append(GAN.train_on_batch(x,y))
@@ -190,30 +190,23 @@ def train(args, G ,D, GAN, x_train, x_test, y_test, x_val, y_val):
             except KeyboardInterrupt: #hit control-C to exit and save video there
                 break
             
-        if (epoch + 1 % v_freq == 0):
-            
-            pred_test = D.predict(x_test)
-            pred_test = np.reshape(pred_test, x_test.shape[0])
-            pred_val = D.predict(x_val)
-            pred_val = np.reshape(pred_val, x_val.shape[0])
-            
-            val_roc = roc_auc_score(y_val, pred_val)
-            test_roc = roc_auc_score(y_test, pred_test)
-            
-            if (val_roc > best_val_roc):
-                best_val_roc = val_roc
-                best_test_roc = test_roc
+            if (epoch + 1 % v_freq == 0):
+                val_roc, test_roc = compute_au(D, G, GAN, x_val, y_val, x_test, y_test, args.evaluation)
                 
-                histogram(G, D, GAN, x_test, y_test, result_path, latent_dim)
-                generated_images = G.predict(noise_data(50, dataset = 'cifar10'))
-                show_images(generated_images,epoch,result_path, dataset = 'cifar10')
-                
-                G.save('{}/gen_anoclass_{}.h5'.format(result_path,ano_class))
-                D.save('{}/dis_anoclass_{}.h5'.format(result_path,ano_class))
-                
-            print("\tGen. Loss: {:.3f}\n\tDisc. Loss: {:.3f}\n\tArea_roc: {:.3f}".format(g_loss[-1], d_loss[-1], val_roc))
-        else:
-            print("\tGen. Loss: {:.3f}\n\tDisc. Loss: {:.3f}".format(g_loss[-1], d_loss[-1]))
+                if (val_roc > best_val_roc):
+                    best_val_roc = val_roc
+                    best_test_roc = test_roc
+                    
+                    histogram(G, D, GAN, x_test, y_test, result_path, latent_dim)
+                    generated_images = G.predict(noise_data(50, latent_dim))
+                    show_images(generated_images,result_path, dataset='cifar10')
+                    
+                    G.save('{}/gen_anoclass_{}.h5'.format(result_path,ano_class))
+                    D.save('{}/dis_anoclass_{}.h5'.format(result_path,ano_class))
+                    
+                print("\tGen. Loss: {:.3f}\n\tDisc. Loss: {:.3f}\n\tArea_roc: {:.3f}".format(g_loss[-1], d_loss[-1], val_roc))
+            else:
+                print("\tGen. Loss: {:.3f}\n\tDisc. Loss: {:.3f}".format(g_loss[-1], d_loss[-1]))
                 
         #Saving result in result.json file    
         result =[("best_test_roc",round(best_test_roc,3)),("val_roc",round(best_val_roc,3))]
