@@ -93,9 +93,9 @@ def histogram(G, D, GAN, x_test, y_test, result_path, latent_dim):
     plt.hist(y_gen_pred, density=True, bins=100, range=(0,1.0), label='generated', color='g', alpha=0.5)
     
     #plt.axis([0, 1, 0, 1]) 
-    plt.xlabel('Confidence')
-    plt.ylabel('Probability')
-    plt.title('AUPRC on test set', fontsize=20)
+    plt.xlabel('Discriminator Score')
+    plt.ylabel('Frequency of Occurence')
+    plt.title('Histogram of Discriminator Score at the Best Epoch')
     plt.legend(loc=9)
     plt.savefig('{}/histogram_at_best_epoch.png'.format(result_path),dpi=60)
     plt.close()

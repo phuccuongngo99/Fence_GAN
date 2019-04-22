@@ -81,11 +81,6 @@ def train(args, G ,D, GAN, x_train, x_test, y_test, x_val, y_val):
     ano_class = args.ano_class
     dataset = args.dataset
     latent_dim = args.latent_dim
-    
-    d_loss = []
-    g_loss = []
-    best_val_prc = 0
-    best_test_prc = 0
 
     if not os.path.exists('./result/{}/'.format(args.dataset)):
         os.makedirs('./result/{}/'.format(args.dataset))
@@ -94,7 +89,11 @@ def train(args, G ,D, GAN, x_train, x_test, y_test, x_val, y_val):
         os.makedirs(result_path)
     
     if dataset == 'mnist':
-        #Creating the result folder
+        d_loss = []
+        g_loss = []
+        best_val_prc = 0
+        best_test_prc = 0
+        
         for epoch in range(epochs):
             try:
                 with trange(x_train.shape[0]//batch_size, ascii=True, desc='Epoch {}'.format(epoch+1)) as t:
@@ -149,7 +148,7 @@ def train(args, G ,D, GAN, x_train, x_test, y_test, x_val, y_val):
         print('Dataset: {}| Anomalous class: {}| Best test {}: {}'.format(args.dataset, ano_class, args.evaluation, round(best_test_prc,3)))
         
         #Saving result in result.json file    
-        result =[("best_test_prc",round(best_test_prc,3)),("val_prc",round(best_prc,3))]
+        result =[("best_test_prc",round(best_test_prc,3)),("val_prc",round(best_val_prc,3))]
         result_dict = OrderedDict(result)
         with open('{}/result.json'.format(result_path),'w+') as outfile:
             json.dump(result_dict, outfile, indent=4)
@@ -157,8 +156,7 @@ def train(args, G ,D, GAN, x_train, x_test, y_test, x_val, y_val):
     elif dataset == 'cifar10':
         d_loss = []
         g_loss = []
-        val_roc_list = []
-        best_roc = 0
+        best_val_roc = 0
         best_test_roc = 0
         
         for epoch in range(epochs):
@@ -189,37 +187,39 @@ def train(args, G ,D, GAN, x_train, x_test, y_test, x_val, y_val):
                         
                         t.set_postfix(G_loss=g_loss[-1], D_loss=d_loss[-1])
                         
-                if (epoch + 1 % v_freq == 0):
-                    print("Epoch #{}/{}: Discriminator Loss: {}, Generator Loss: {}".format(epoch, epochs,
-                              d_loss[-1], g_loss[-1]))
-                    # Save Generated Images
-                    generated_images = G.predict(noise_data(50, dataset = 'cifar10'))
-                    show_images(generated_images,epoch,result_path, dataset = 'cifar10')
-    
-                pred_test = D.predict(x_test)
-                pred_test = np.reshape(pred_test, x_test.shape[0])
-                pred_val = D.predict(x_val)
-                pred_val = np.reshape(pred_val, x_val.shape[0])
-                
-                val_roc_list.append(roc_auc_score(y_val, pred_val))
-                test_roc = roc_auc_score(y_test, pred_test)
-                
-
-                if (val_roc_list[-1] >= best_roc):
-                    best_roc = val_roc_list
-                    best_test_roc = test_roc
-                    
-                    G.save('{}/gen_{}.h5'.format(result_path,ano_class))
-                    D.save('{}/dis_{}.h5'.format(result_path,ano_class))
-                    
-                    #Saving result in result.json file    
-                    result =[("best_test_roc",round(best_test_roc,3)),("val_roc",round(best_roc,3))]
-                    result_dict = OrderedDict(result)
-                    with open('{}/result.json'.format(result_path),'w+') as outfile:
-                        json.dump(result_dict, outfile, indent=4)
-                        
             except KeyboardInterrupt: #hit control-C to exit and save video there
                 break
+            
+        if (epoch + 1 % v_freq == 0):
+            
+            pred_test = D.predict(x_test)
+            pred_test = np.reshape(pred_test, x_test.shape[0])
+            pred_val = D.predict(x_val)
+            pred_val = np.reshape(pred_val, x_val.shape[0])
+            
+            val_roc = roc_auc_score(y_val, pred_val)
+            test_roc = roc_auc_score(y_test, pred_test)
+            
+            if (val_roc > best_val_roc):
+                best_val_roc = val_roc
+                best_test_roc = test_roc
+                
+                histogram(G, D, GAN, x_test, y_test, result_path, latent_dim)
+                generated_images = G.predict(noise_data(50, dataset = 'cifar10'))
+                show_images(generated_images,epoch,result_path, dataset = 'cifar10')
+                
+                G.save('{}/gen_anoclass_{}.h5'.format(result_path,ano_class))
+                D.save('{}/dis_anoclass_{}.h5'.format(result_path,ano_class))
+                
+            print("\tGen. Loss: {:.3f}\n\tDisc. Loss: {:.3f}\n\tArea_roc: {:.3f}".format(g_loss[-1], d_loss[-1], val_roc))
+        else:
+            print("\tGen. Loss: {:.3f}\n\tDisc. Loss: {:.3f}".format(g_loss[-1], d_loss[-1]))
+                
+        #Saving result in result.json file    
+        result =[("best_test_roc",round(best_test_roc,3)),("val_roc",round(best_val_roc,3))]
+        result_dict = OrderedDict(result)
+        with open('{}/result.json'.format(result_path),'w+') as outfile:
+            json.dump(result_dict, outfile, indent=4)
 
 def training_pipeline(args):
     seed(args.seed)
