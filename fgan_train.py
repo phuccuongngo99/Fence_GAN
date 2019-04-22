@@ -168,12 +168,12 @@ def train(args, G ,D, GAN, x_train, x_test, y_test, x_val, y_val):
                         
                         set_trainability(D, True)
                         K.set_value(gamma, [1])
-                        x,y = D_data(batch_size,G,'normal',x_train, dataset = dataset)
+                        x,y = D_data(batch_size,G,'normal',x_train, latent_dim)
                         loss_temp.append(D.train_on_batch(x, y))
                         
                         set_trainability(D, True)
                         K.set_value(gamma, [args.gamma])
-                        x,y = D_data(batch_size,G,'gen',x_train, dataset = dataset)
+                        x,y = D_data(batch_size,G,'gen',x_train, latent_dim)
                         loss_temp.append(D.train_on_batch(x,y))
                         
                         d_loss.append(sum(loss_temp)/len(loss_temp))
