@@ -31,4 +31,4 @@ Check results and plots under `result` folder
 
 
 ### CIFAR10
-    python3 main.py --dataset cifar10 --ano_class 0 --epochs 150 --alpha 0.5 --beta 10 --gamma 0.5 --batch_size 128 --pretrain 15 --d_lr 1e-4 --g_lr 1e-3 --v-freq 1 --latent_dim 256 --evaluation 'auroc'   
+    python3 main.py --dataset cifar10 --ano_class 0 --epochs 150 --alpha 0.5 --beta 10 --gamma 0.5 --batch_size 128 --pretrain 15 --d_lr 1e-4 --g_lr 1e-3 --v_freq 1 --latent_dim 256 --evaluation 'auroc'   
