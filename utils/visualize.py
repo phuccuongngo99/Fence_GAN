@@ -57,7 +57,7 @@ def show_images(img_array,epoch,result_path, dataset = 'mnist'):
         img.show()
     
 
-def D_test(D, G, GAN, epoch, v_freq, x_val, y_val, x_test, y_test, ano_data, ano_class,result_path):
+def D_test(D, G, GAN, epoch, v_freq, x_val, y_val, x_test, y_test, ano_class,result_path):
     ###Plotting AUPRC curve
     ###Histogram of predicted scores of nornmal data, anomalous data and generated data
     
@@ -68,19 +68,6 @@ def D_test(D, G, GAN, epoch, v_freq, x_val, y_val, x_test, y_test, ano_data, ano
     precision, recall, thresholds = precision_recall_curve(y_true, y_pred)
     val_prc = auc(recall, precision)
     
-    #Drawing graph
-    plt.figure()
-    plt.step(recall, precision, color='b', alpha=0.2, where='post')
-    plt.fill_between(recall, precision, step='post', alpha=0.2, color='b')
-    plt.xlabel('Recall')
-    plt.ylabel('Precision')
-    plt.ylim([0.0, 1.05])
-    plt.xlim([0.0, 1.0])
-    plt.title('Validation Ano_class:{} Epoch: {}; AUPRC: {}'.format(ano_class, epoch+1, val_prc))
-    
-    plt.savefig('{}/pictures/auprc_{}.png'.format(result_path,int((epoch+1)/v_freq)))
-    plt.close()
-    
     ###TEST
     y_true = y_test
     y_pred = np.squeeze(D.predict(x_test))
@@ -88,20 +75,24 @@ def D_test(D, G, GAN, epoch, v_freq, x_val, y_val, x_test, y_test, ano_data, ano
     precision, recall, thresholds = precision_recall_curve(y_true, y_pred)
     test_prc = auc(recall, precision)
     
-    ###Generated images
+    return val_prc, test_prc
+
+
+def histogram(G, D, GAN, x_test, y_test, result_path):
     y_gen_pred = np.squeeze(GAN.predict(noise_data(5000)))
+    y_pred = np.squeeze(D.predict(x_test))
     
     plt.figure()
-    plt.hist(y_pred[-ano_data.shape[0]*3//4:], density=True, bins=100, range=(0,1.0), label='anomalous', color='r', alpha=0.5)
-    plt.hist(y_pred[:-ano_data.shape[0]*3//4], density=True, bins=100, range=(0,1.0), label='real', color='b', alpha=0.5)
+    #1 is normal data
+    #0 is anomalous data
+    plt.hist(y_pred[np.where(y_test==0)], density=True, bins=100, range=(0,1.0), label='anomalous', color='r', alpha=0.5)
+    plt.hist(y_pred[np.where(y_test==1)], density=True, bins=100, range=(0,1.0), label='normal', color='b', alpha=0.5)
     plt.hist(y_gen_pred, density=True, bins=100, range=(0,1.0), label='generated', color='g', alpha=0.5)
     
     #plt.axis([0, 1, 0, 1]) 
     plt.xlabel('Confidence')
     plt.ylabel('Probability')
-    plt.title('Test PRC:{:.3f}'.format(test_prc), fontsize=20)
+    plt.title('AUPRC on test set', fontsize=20)
     plt.legend(loc=9)
-    plt.savefig('{}/histogram/his_{}.png'.format(result_path,int((epoch+1)/v_freq)),dpi=60)
+    plt.savefig('{}/histogram/histogram_at_best_epoch.png'.format(result_path),dpi=60)
     plt.close()
-    
-    return val_prc, test_prc

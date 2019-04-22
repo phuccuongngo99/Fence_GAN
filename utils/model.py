@@ -11,7 +11,7 @@ from keras.regularizers import l2
 from keras.optimizers import Adam
 
 init_kernel = tf.random_normal_initializer(mean=0.0, stddev=0.02)
-gm = K.variable([1])
+gamma = K.variable([1])
 
 def load_model(args):
     if args.dataset == 'mnist': 
@@ -26,7 +26,7 @@ def set_trainability(model, trainable=False): #alternate to freeze D network whi
 
 def D_loss(y_true, y_pred):
     loss_gen = losses.binary_crossentropy(y_true,y_pred)
-    loss = gm * loss_gen
+    loss = gamma * loss_gen
     return loss
 
 def get_cifar10_model(args):
@@ -129,7 +129,7 @@ def get_mnist_model(args):
     D_out = Dense(1, activation='sigmoid', kernel_initializer=init_kernel)(x)
     D = Model(D_in, D_out)
     dopt = Adam(lr=args.d_lr,beta_1=0.5, beta_2=0.999)
-    gm = K.variable([1])
+    gamma = K.variable([1])
     D.compile(loss=D_loss,optimizer=dopt)
 
     '''

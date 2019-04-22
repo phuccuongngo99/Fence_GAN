@@ -15,11 +15,11 @@ import random
 
 from utils.model import load_model
 from utils.data import load_data
-from utils.visualize import show_images, D_test
+from utils.visualize import show_images, D_test, histogram
 
 from sklearn.metrics import roc_auc_score
 
-gw = K.variable([1])
+gamma = K.variable([1])
 
 def set_trainability(model, trainable=False): #alternate to freeze D network while training only G in (G+D) combination
     model.trainable = trainable
@@ -50,7 +50,7 @@ def D_data(n_samples,G,mode,x_train, dataset = 'mnist'):
         
         return x_gen, y0
     
-def pretrain(args, G ,D, GAN, x_train, x_test, y_test, x_val, y_val, ano_data, dataset = 'mnist'):
+def pretrain(args, G ,D, GAN, x_train, x_test, y_test, x_val, y_val, dataset = 'mnist'):
     ###Pretrain discriminator
     ###Generator is not trained
     print("===== Start of Pretraining =====")
@@ -61,12 +61,12 @@ def pretrain(args, G ,D, GAN, x_train, x_test, y_test, x_val, y_val, ano_data, d
             for step in t:                
                 loss = 0
                 set_trainability(D, True)
-                K.set_value(gw, [1])
+                K.set_value(gamma, [1])
                 x,y = D_data(batch_size,G,'real',x_train, dataset = dataset)
                 loss += D.train_on_batch(x, y)
                 
                 set_trainability(D, True)
-                K.set_value(gw, [args.gamma])
+                K.set_value(gamma, [args.gamma])
                 x,y = D_data(batch_size,G,'gen',x_train, dataset = dataset)
                 loss += D.train_on_batch(x,y)
                 
@@ -75,7 +75,7 @@ def pretrain(args, G ,D, GAN, x_train, x_test, y_test, x_val, y_val, ano_data, d
     print("===== End of Pretraining =====")
         
         
-def train(args, G ,D, GAN, x_train, x_test, y_test, x_val, y_val, ano_data):
+def train(args, G ,D, GAN, x_train, x_test, y_test, x_val, y_val):
     ###Adversarial Training
     epochs = args.epochs
     batch_size = args.batch_size
@@ -83,18 +83,18 @@ def train(args, G ,D, GAN, x_train, x_test, y_test, x_val, y_val, ano_data):
     ano_class = args.ano_class
     dataset = args.dataset
     
+    if not os.path.exists('./result/{}/'.format(args.dataset)):
+        os.makedirs('./result/{}/'.format(args.dataset))
+    result_path = './result/{}/{}'.format(args.dataset,len(os.listdir('./result/{}/'.format(args.dataset))))
+    if not os.path.exists(result_path):
+        os.makedirs(result_path)
+    if not os.path.exists('{}/pictures'.format(result_path)):
+        os.makedirs('{}/pictures'.format(result_path))
+    if not os.path.exists('{}/histogram'.format(result_path)):
+        os.makedirs('{}/histogram'.format(result_path))
+    
     if dataset == 'mnist':
         #Creating the result folder
-        if not os.path.exists('./result/{}/'.format(args.dataset)):
-            os.makedirs('./result/{}/'.format(args.dataset))
-        result_path = './result/{}/{}'.format(args.dataset,len(os.listdir('./result/{}/'.format(args.dataset))))
-        if not os.path.exists(result_path):
-            os.makedirs(result_path)
-        if not os.path.exists('{}/pictures'.format(result_path)):
-            os.makedirs('{}/pictures'.format(result_path))
-        if not os.path.exists('{}/histogram'.format(result_path)):
-            os.makedirs('{}/histogram'.format(result_path))
-            
         d_loss = []
         g_loss = []
         val_prc_list = []
@@ -108,12 +108,12 @@ def train(args, G ,D, GAN, x_train, x_test, y_test, x_val, y_val, ano_data):
                         loss_temp = []
                         
                         set_trainability(D, True)
-                        K.set_value(gw, [1])
+                        K.set_value(gamma, [1])
                         x,y = D_data(batch_size,G,'real',x_train)
                         loss_temp.append(D.train_on_batch(x, y))
                         
                         set_trainability(D, True)
-                        K.set_value(gw, [args.gamma])
+                        K.set_value(gamma, [args.gamma])
                         x,y = D_data(batch_size,G,'gen',x_train)
                         loss_temp.append(D.train_on_batch(x,y))
                         
@@ -132,7 +132,7 @@ def train(args, G ,D, GAN, x_train, x_test, y_test, x_val, y_val, ano_data):
             
             show_images(G.predict(noise_data(16)),epoch+1,result_path)
             if (epoch + 1) % v_freq == 0:
-                val_prc, test_prc = D_test(D, G, GAN, epoch, v_freq, x_val, y_val, x_test, y_test, ano_data, ano_class,result_path)
+                val_prc, test_prc = D_test(D, G, GAN, epoch, v_freq, x_val, y_val, x_test, y_test, ano_class,result_path)
                 val_prc_list.append(val_prc)
                 
                 f = open('{}/logs.txt'.format(result_path),'a+')
@@ -142,19 +142,11 @@ def train(args, G ,D, GAN, x_train, x_test, y_test, x_val, y_val, ano_data):
                 if val_prc > best_prc:
                     best_prc = val_prc
                     best_test_prc = test_prc
-                    G.save('{}/gen_{}.h5'.format(result_path,ano_class))
-                    D.save('{}/dis_{}.h5'.format(result_path,ano_class))
+                    histogram(G, D, GAN, x_test, y_test, result_path)
+                    G.save('{}/gen_anoclass_{}.h5'.format(result_path,ano_class))
+                    D.save('{}/dis_anoclass_{}.h5'.format(result_path,ano_class))
                     
                 print("\tGen. Loss: {:.3f}\n\tDisc. Loss: {:.3f}\n\tArea_prc: {:.3f}".format(g_loss[-1], d_loss[-1], val_prc_list[-1]))
-                
-                plt.figure()
-                plt.plot([i*v_freq for i in range(len(val_prc_list))], val_prc_list, '-b', label='PRC')
-                plt.legend()
-                plt.title('AUPRC vs AUROC of ano_class {}'.format(ano_class))
-                plt.xlabel('Epochs')
-                plt.ylabel('%Area')
-                plt.savefig('{}/area.png'.format(result_path), dpi=60)
-                plt.close()
             else:
                 print("\tGen. Loss: {:.3f}\n\tDisc. Loss: {:.3f}".format(g_loss[-1], d_loss[-1]))
         
@@ -165,17 +157,6 @@ def train(args, G ,D, GAN, x_train, x_test, y_test, x_val, y_val, ano_data):
             json.dump(result_dict, outfile, indent=4)
 
     elif dataset == 'cifar10':
-        #Creating the result folder
-        if not os.path.exists('./result/{}/'.format(args.dataset)):
-            os.makedirs('./result/{}/'.format(args.dataset))
-        result_path = './result/{}/{}'.format(args.dataset,len(os.listdir('./result/{}/'.format(args.dataset))))
-        if not os.path.exists(result_path):
-            os.makedirs(result_path)
-        if not os.path.exists('{}/pictures'.format(result_path)):
-            os.makedirs('{}/pictures'.format(result_path))
-        if not os.path.exists('{}/histogram'.format(result_path)):
-            os.makedirs('{}/histogram'.format(result_path))
-            
         d_loss = []
         g_loss = []
         val_roc_list = []
@@ -190,12 +171,12 @@ def train(args, G ,D, GAN, x_train, x_test, y_test, x_val, y_val, ano_data):
                         loss_temp = []
                         
                         set_trainability(D, True)
-                        K.set_value(gw, [1])
+                        K.set_value(gamma, [1])
                         x,y = D_data(batch_size,G,'real',x_train, dataset = dataset)
                         loss_temp.append(D.train_on_batch(x, y))
                         
                         set_trainability(D, True)
-                        K.set_value(gw, [args.gamma])
+                        K.set_value(gamma, [args.gamma])
                         x,y = D_data(batch_size,G,'gen',x_train, dataset = dataset)
                         loss_temp.append(D.train_on_batch(x,y))
                         
@@ -246,10 +227,9 @@ def training_pipeline(args):
     seed(args.seed)
     set_random_seed(args.seed)
     if args.dataset == 'mnist':
-        x_train, x_test, y_test, x_val, y_val, ano_data = load_data(args)
+        x_train, x_test, y_test, x_val, y_val = load_data(args)
     elif args.dataset == 'cifar10':
         x_train, x_test, y_test, x_val, y_val = load_data(args)
-        ano_data = 0
     G, D, GAN = load_model(args)
-    pretrain(args, G, D, GAN, x_train, x_test, y_test, x_val, y_val, ano_data, dataset = args.dataset)
-    train(args, G, D, GAN, x_train, x_test, y_test, x_val, y_val, ano_data)
+    pretrain(args, G, D, GAN, x_train, x_test, y_test, x_val, y_val, dataset = args.dataset)
+    train(args, G, D, GAN, x_train, x_test, y_test, x_val, y_val)

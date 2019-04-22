@@ -36,7 +36,6 @@ def get_mnist(ano_class):
     #Validation data: x_val: 5% of data/images from normal classes + 25% of data/images from anomalous classes
     #Testing data: x_test: 15% of data/images from normal classes + 75% of data/images from anomalous classes
     ###
-    
     delete = []
     for count, i in enumerate(y_total):
         if i == ano_class:
@@ -58,7 +57,7 @@ def get_mnist(ano_class):
     x_val = np.concatenate((normal_data[int(0.95*normal_num):,...], ano_data[ano_num*3//4:]))
     y_val = np.concatenate((np.ones(normal_num-int(0.95*normal_num)), np.zeros(ano_num-ano_num*3//4)))
     
-    return x_train, x_test, y_test, x_val, y_val, ano_data
+    return x_train, x_test, y_test, x_val, y_val
 
 def get_cifar10(ano_class):
     (X_train, y_train), (X_test, y_test) = cifar10.load_data()

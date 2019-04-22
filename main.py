@@ -4,7 +4,7 @@ from fgan_train import training_pipeline
 parser = argparse.ArgumentParser('Train your Fence GAN')
 
 ###Training hyperparameter
-args = parser.add_argument('--dataset', default='cifar10', help='2d | kdd99 | mnist | cifar10')
+args = parser.add_argument('--dataset', default='mnist', help='2d | kdd99 | mnist | cifar10')
 args = parser.add_argument('--ano_class',type=int, default=0, help='1 anomaly class')
 args = parser.add_argument('--epochs', type=int, default=2, help='number of epochs to train')
 
