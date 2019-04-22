@@ -70,7 +70,8 @@ optional arguments:
 ## Citation
 ```
 @article{fencegan2019,
-  author    = {Cuong Phuc Ngo and Amadeus Aristo Winarto and Connie Khor Li Kou and Sojeong Park and Farhan Akram and Hwee   Kuan Lee},
+  author    = {Cuong Phuc Ngo and Amadeus Aristo Winarto and Connie Khor Li Kou and 
+               Sojeong Park and Farhan Akram and Hwee Kuan Lee},
   title     = {Fence GAN: Towards Better Anomaly Detection},
   year      = {2019},
   url       = {https://arxiv.org/abs/1904.01209},
