@@ -1,4 +1,4 @@
-# Fence GAN: Toward Better Anomaly Detection
+# Fence GAN: Towards Better Anomaly Detection
 
 This is the official implementation of the paper: Fence GAN: Towards Better Anomaly Detection [(link)](https://arxiv.org/abs/1904.01209).
 
@@ -67,7 +67,7 @@ Enter `python3 main.py -h` for more training options
   @article{ngo2019,
       author    = {Cuong Phuc Ngo and Amadeus Aristo Winarto and Connie Khor Li Kou and
                    Sojeong Park and Farhan Akram and Hwee Kuan Lee},
-      title     = {Efficient GAN-Based Anomaly Detection},
+      title     = {Fence GAN: Towards Better Anomaly Detection},
       year      = {2019},
       url       = {https://arxiv.org/pdf/1904.01209.pdf},
       archivePrefix = {arXiv}
