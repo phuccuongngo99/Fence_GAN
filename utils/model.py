@@ -10,8 +10,6 @@ from keras.layers import Input, Dense, BatchNormalization, Activation, Dropout
 from keras.regularizers import l2
 from keras.optimizers import Adam
 
-init_kernel = tf.random_normal_initializer(mean=0.0, stddev=0.02)
-
 gamma = K.variable([1])
 
 def load_model(args):
@@ -99,6 +97,7 @@ def get_mnist_model(args):
     '''
     Building Generator
     '''
+    init_kernel = tf.random_normal_initializer(mean=0.0, stddev=0.02)
     Z_in = Input(shape=(200,))
     x = Dense(1024, activation = 'relu', kernel_initializer=init_kernel)(Z_in)
     x = BatchNormalization()(x)
