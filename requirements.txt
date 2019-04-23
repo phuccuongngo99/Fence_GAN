@@ -1,7 +1,8 @@
 keras
 numpy
+scipy
+sklearn
 json
 matplotlib
 tqdm
-sklearn
 argparse
