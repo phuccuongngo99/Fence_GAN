@@ -1,15 +1,11 @@
 import numpy as np
 from keras.datasets import mnist, cifar10
 
-def preprocess(x, dataset = 'mnist'):
-    if dataset == 'mnist':
-        x = np.float64(x)
-        x = (x / 255 - 0.5) * 2
-        x = np.clip(x, -1, 1)
-        return x
-    elif dataset == 'cifar10':
-        x = (x.astype(np.float32) - 127.5)/127.5
-        return x
+def preprocess(x):
+    x = np.float64(x)
+    x = (x / 255 - 0.5) * 2
+    x = np.clip(x, -1, 1)
+    return x
 
 
 def load_data(args):
@@ -99,9 +95,9 @@ def get_cifar10(ano_class):
     X_val = np.concatenate([X_val_normal, X_val_anomaly])
     X_test = np.concatenate([X_test_normal, X_test_anomaly])
 
-    X_train = preprocess(X_train, dataset = 'cifar10')
-    X_val = preprocess(X_val, dataset = 'cifar10')
-    X_test = preprocess(X_test, dataset = 'cifar10')
+    X_train = preprocess(X_train)
+    X_val = preprocess(X_val)
+    X_test = preprocess(X_test)
     
     '''
     Prepare Labels

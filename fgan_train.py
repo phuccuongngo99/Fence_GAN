@@ -1,24 +1,17 @@
-import numpy as np
-from numpy.random import seed
-
-from tensorflow import set_random_seed
-
-from tqdm import trange
-
-import keras.backend as K
-
-import matplotlib.pyplot as plt
-from collections import OrderedDict
 import os
 import json
 import random
+from tqdm import trange
+from collections import OrderedDict
+
+import numpy as np
+from numpy.random import seed
+from tensorflow import set_random_seed
+import keras.backend as K
 
 from utils.model import *
 from utils.data import load_data
 from utils.visualize import show_images, compute_au, histogram
-
-from sklearn.metrics import roc_auc_score
-
 
 def set_trainability(model, trainable=False):
     model.trainable = trainable
@@ -79,8 +72,8 @@ def train(args, G ,D, GAN, x_train, x_test, y_test, x_val, y_val):
     batch_size = args.batch_size
     v_freq= args.v_freq
     ano_class = args.ano_class
-    dataset = args.dataset
     latent_dim = args.latent_dim
+    evaluation = args.evaluation
 
     if not os.path.exists('./result/{}/'.format(args.dataset)):
         os.makedirs('./result/{}/'.format(args.dataset))
@@ -88,131 +81,70 @@ def train(args, G ,D, GAN, x_train, x_test, y_test, x_val, y_val):
     if not os.path.exists(result_path):
         os.makedirs(result_path)
     
-    if dataset == 'mnist':
-        d_loss = []
-        g_loss = []
-        best_val_prc = 0
-        best_test_prc = 0
+    d_loss = []
+    g_loss = []
+    best_val = 0
+    best_test = 0
+    
+    print('===== Start of Adversarial Training =====')
+    for epoch in range(epochs):
+        try:
+            with trange(x_train.shape[0]//batch_size, ascii=True, desc='Epoch {}'.format(epoch+1)) as t:
+                for step in t:
+                    ###Train Discriminator
+                    loss_temp = []
+                    
+                    set_trainability(D, True)
+                    K.set_value(gamma, [1])
+                    x,y = D_data(batch_size,G,'normal',x_train, latent_dim)
+                    loss_temp.append(D.train_on_batch(x, y))
+                    
+                    set_trainability(D, True)
+                    K.set_value(gamma, [args.gamma])
+                    x,y = D_data(batch_size,G,'gen',x_train, latent_dim)
+                    loss_temp.append(D.train_on_batch(x,y))
+                    
+                    d_loss.append(sum(loss_temp)/len(loss_temp))
+                    
+                    ###Train Generator
+                    set_trainability(D, False)
+                    x = noise_data(batch_size, latent_dim)
+                    y = np.zeros(batch_size)
+                    y[:] = args.alpha
+                    g_loss.append(GAN.train_on_batch(x,y))
+                    
+                    t.set_postfix(G_loss=g_loss[-1], D_loss=d_loss[-1])
+        except KeyboardInterrupt: #hit control-C to exit and save video there
+            break    
         
-        for epoch in range(epochs):
-            try:
-                with trange(x_train.shape[0]//batch_size, ascii=True, desc='Epoch {}'.format(epoch+1)) as t:
-                    for step in t:
-                        ###Train Discriminator
-                        loss_temp = []
-                        
-                        set_trainability(D, True)
-                        K.set_value(gamma, [1])
-                        x,y = D_data(batch_size,G,'normal',x_train, latent_dim)
-                        loss_temp.append(D.train_on_batch(x, y))
-                        
-                        set_trainability(D, True)
-                        K.set_value(gamma, [args.gamma])
-                        x,y = D_data(batch_size,G,'gen',x_train, latent_dim)
-                        loss_temp.append(D.train_on_batch(x,y))
-                        
-                        d_loss.append(sum(loss_temp)/len(loss_temp))
-                        
-                        ###Train Generator
-                        set_trainability(D, False)
-                        x = noise_data(batch_size, latent_dim)
-                        y = np.zeros(batch_size)
-                        y[:] = args.alpha
-                        g_loss.append(GAN.train_on_batch(x,y))
-                        
-                        t.set_postfix(G_loss=g_loss[-1], D_loss=d_loss[-1])
-            except KeyboardInterrupt: #hit control-C to exit and save video there
-                break    
+        if (epoch + 1) % v_freq == 0:
+            val, test = compute_au(D, G, GAN, x_val, y_val, x_test, y_test, evaluation)
             
-            if (epoch + 1) % v_freq == 0:
-                val_prc, test_prc = compute_au(D, G, GAN, x_val, y_val, x_test, y_test, args.evaluation)
-                
-                f = open('{}/logs.txt'.format(result_path),'a+')
-                f.write('\nEpoch: {}\n\tval_prc: {:.3f} \n\ttest_prc: {:.3f}'.format(epoch+1, val_prc, test_prc))
-                f.close()
-                
-                if val_prc > best_val_prc:
-                    best_val_prc = val_prc
-                    best_test_prc = test_prc
-                    histogram(G, D, GAN, x_test, y_test, result_path, latent_dim)
-                    show_images(G.predict(noise_data(16, latent_dim)),result_path)
-                    
-                    G.save('{}/gen_anoclass_{}.h5'.format(result_path,ano_class))
-                    D.save('{}/dis_anoclass_{}.h5'.format(result_path,ano_class))
-                    
-                print("\tGen. Loss: {:.3f}\n\tDisc. Loss: {:.3f}\n\tArea_prc: {:.3f}".format(g_loss[-1], d_loss[-1], val_prc))
-            else:
-                print("\tGen. Loss: {:.3f}\n\tDisc. Loss: {:.3f}".format(g_loss[-1], d_loss[-1]))
-        
-        print('==== End of Training ====')
-        print('Dataset: {}| Anomalous class: {}| Best test {}: {}'.format(args.dataset, ano_class, args.evaluation, round(best_test_prc,3)))
-        
-        #Saving result in result.json file    
-        result =[("best_test_prc",round(best_test_prc,3)),("val_prc",round(best_val_prc,3))]
-        result_dict = OrderedDict(result)
-        with open('{}/result.json'.format(result_path),'w+') as outfile:
-            json.dump(result_dict, outfile, indent=4)
-
-    elif dataset == 'cifar10':
-        d_loss = []
-        g_loss = []
-        best_val_roc = 0
-        best_test_roc = 0
-        
-        for epoch in range(epochs):
-            try:
-                with trange(x_train.shape[0]//batch_size, ascii=True, desc='Epoch {}'.format(epoch+1)) as t:
-                    for step in t:
-                        ###Train Discriminator
-                        loss_temp = []
-                        
-                        set_trainability(D, True)
-                        K.set_value(gamma, [1])
-                        x,y = D_data(batch_size,G,'normal',x_train, latent_dim)
-                        loss_temp.append(D.train_on_batch(x, y))
-                        
-                        set_trainability(D, True)
-                        K.set_value(gamma, [args.gamma])
-                        x,y = D_data(batch_size,G,'gen',x_train, latent_dim)
-                        loss_temp.append(D.train_on_batch(x,y))
-                        
-                        d_loss.append(sum(loss_temp)/len(loss_temp))
-                        
-                        ###Train Generator
-                        set_trainability(D, False)
-                        x = noise_data(batch_size, latent_dim)
-                        y = np.zeros(batch_size)
-                        y[:] = args.alpha
-                        g_loss.append(GAN.train_on_batch(x,y))
-                        
-                        t.set_postfix(G_loss=g_loss[-1], D_loss=d_loss[-1])
-                        
-            except KeyboardInterrupt: #hit control-C to exit and save video there
-                break
+            f = open('{}/logs.txt'.format(result_path),'a+')
+            f.write('\nEpoch: {}\n\t Val_{}: {:.3f} \n\t Test_{}: {:.3f}'.format(epoch+1, evaluation, val, evaluation, test))
+            f.close()
             
-            if (epoch + 1 % v_freq == 0):
-                val_roc, test_roc = compute_au(D, G, GAN, x_val, y_val, x_test, y_test, args.evaluation)
+            if val > best_val:
+                best_val = val
+                best_test = test
+                histogram(G, D, GAN, x_test, y_test, result_path, latent_dim)
+                show_images(G.predict(noise_data(25, latent_dim)),result_path)
                 
-                if (val_roc > best_val_roc):
-                    best_val_roc = val_roc
-                    best_test_roc = test_roc
-                    
-                    histogram(G, D, GAN, x_test, y_test, result_path, latent_dim)
-                    generated_images = G.predict(noise_data(50, latent_dim))
-                    show_images(generated_images,result_path, dataset='cifar10')
-                    
-                    G.save('{}/gen_anoclass_{}.h5'.format(result_path,ano_class))
-                    D.save('{}/dis_anoclass_{}.h5'.format(result_path,ano_class))
-                    
-                print("\tGen. Loss: {:.3f}\n\tDisc. Loss: {:.3f}\n\tArea_roc: {:.3f}".format(g_loss[-1], d_loss[-1], val_roc))
-            else:
-                print("\tGen. Loss: {:.3f}\n\tDisc. Loss: {:.3f}".format(g_loss[-1], d_loss[-1]))
+                G.save('{}/gen_anoclass_{}.h5'.format(result_path,ano_class))
+                D.save('{}/dis_anoclass_{}.h5'.format(result_path,ano_class))
                 
-        #Saving result in result.json file    
-        result =[("best_test_roc",round(best_test_roc,3)),("val_roc",round(best_val_roc,3))]
-        result_dict = OrderedDict(result)
-        with open('{}/result.json'.format(result_path),'w+') as outfile:
-            json.dump(result_dict, outfile, indent=4)
+            print("\tGen. Loss: {:.3f}\n\tDisc. Loss: {:.3f}\n\t{}: {:.3f}".format(g_loss[-1], d_loss[-1], evaluation, val))
+        else:
+            print("\tGen. Loss: {:.3f}\n\tDisc. Loss: {:.3f}".format(g_loss[-1], d_loss[-1]))
+    
+    print('===== End of Adversarial Training =====')
+    print('Dataset: {}| Anomalous class: {}| Best test {}: {}'.format(args.dataset, ano_class, evaluation, round(best_test,3)))
+    
+    #Saving result in result.json file    
+    result =[("best_test_{}".format(evaluation),round(best_test,3)),("best_val_{}".format(evaluation),round(best_val,3))]
+    result_dict = OrderedDict(result)
+    with open('{}/result.json'.format(result_path),'w+') as outfile:
+        json.dump(result_dict, outfile, indent=4)
 
 def training_pipeline(args):
     seed(args.seed)
