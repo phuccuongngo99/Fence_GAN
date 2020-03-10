@@ -14,12 +14,18 @@ seed(1)
 from tensorflow import set_random_seed
 set_random_seed(1)
 
+###Training hyperparameters###
 epoch = 30001
 batch_size = 100
-beta = 15
-###Gen
-gamma = 0.1
+
+
+###Generator Hyperparameters###
 alpha = 0.5
+beta = 15
+
+###Discriminator Hyperparameters###
+gamma = 0.1
+
 
 gm = K.variable([1])
 
@@ -31,9 +37,9 @@ def animate(G,D,epoch,v_animate):
     xlist = np.linspace(0, 40, 40)
     ylist = np.linspace(0, 40, 40)
     X, Y = np.meshgrid(xlist, ylist)
-    In = np.array(np.meshgrid(xlist,ylist)).T.reshape(-1,2) #preping the suitable input (1st aforementioned type)
+    In = np.array(np.meshgrid(xlist,ylist)).T.reshape(-1,2)
     Out = D.predict(In)
-    Z = Out.reshape(40,40).T #reshape the output (2nd aforementioned type) back to the grid for isoline plotting
+    Z = Out.reshape(40,40).T
     c = ('#66B2FF','#99CCFF','#CCE5FF','#FFCCCC','#FF9999','#FF6666')
     cp = plt.contourf(X, Y, Z,[0.0,0.2,0.4,0.5,0.6,0.8,1.0],colors=c)
     plt.colorbar(cp)
@@ -57,6 +63,7 @@ def real_data(n):
 def noise_data(n):
     return np.random.normal(0,8,[n,2])
     
+#Prepare training dataset for Discriminator
 def data_D(G,n_samples,mode):
     if mode == 'real':
         x = real_data(n_samples)
@@ -67,18 +74,21 @@ def data_D(G,n_samples,mode):
         x = G.predict(noise_data(n_samples))
         y = np.zeros(n_samples)
         return x, y
-
+ 
+#Prepare training dataset for Generator
 def data_G(batch_size):
     x = noise_data(batch_size)
     y = np.zeros(batch_size)
-    y[:] = alpha    #setting 1 from 'bullshit' data so that (G+D) can backprop to achieve this fake
+    y[:] = alpha
     return x, y
 
+#Discriminator Loss function
 def D_loss(y_true, y_pred):
     loss_gen = losses.binary_crossentropy(y_true,y_pred)
     loss = gm*loss_gen
     return loss
 
+#Generator model
 def get_generative():
     G_in = Input(shape=(2,))
     x = Dense(10, activation='relu')(G_in)
@@ -89,6 +99,7 @@ def get_generative():
     G = Model(G_in, G_out)
     return G
 
+#Discriminator model
 def get_discriminative():
     D_in = Input(shape=(2,))
     x = Dense(15, activation='relu')(D_in)
@@ -162,7 +173,7 @@ def train(GAN, G, D, epochs=epoch, n_samples=batch_size, v_freq=100, v_animate=1
                 print("Epoch #{}: Generative Loss: {}, Discriminative Loss: {}".format(epoch + 1, g_loss[-1], d_loss[-1]))
             if epoch % v_animate == 0:
                 animate(G,D,epoch,v_animate)
-        except KeyboardInterrupt: #hit control-C to exit and save video there
+        except KeyboardInterrupt:
             break
     G.save('Circle_G.h5')
     D.save('Circle_D.h5')   
