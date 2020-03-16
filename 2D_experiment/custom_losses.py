@@ -2,7 +2,7 @@ import tensorflow as tf
 from keras import losses
 
 ### Average distance from the Center of Mass
-def com(G_out, gamma, power):
+def com(G_out, beta, power):
     def dispersion_loss(y_true, y_pred):
         loss_b = tf.reduce_mean(losses.binary_crossentropy(y_true, y_pred))
         
@@ -12,6 +12,6 @@ def com(G_out, gamma, power):
         avg_distance = tf.reduce_mean(tf.pow(distance, 1/power))
         loss_d = tf.reciprocal(avg_distance)
         
-        loss = loss_b + gamma*loss_d
+        loss = loss_b + beta*loss_d
         return loss
     return dispersion_loss
